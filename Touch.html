@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catch the Falling Objects</title>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+    canvas {
+        display: block;
+        background-color: #f0f0f0;
+    }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const objects = [];
+    const catchRadius = 30;
+    let score = 0;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    class FallingObject {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = -50;
+            this.size = Math.random() * 20 + 20; // Random size
+            this.speed = Math.random() * 3 + 2; // Faster speed
+            this.color = '#' + Math.floor(Math.random()*16777215).toString(16); // Random color
+            this.shape = Math.random() < 0.5 ? 'circle' : 'square'; // Random shape
+        }
+
+        draw() {
+            ctx.beginPath();
+            if (this.shape === 'circle') {
+                ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
+            } else {
+                ctx.rect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
+            }
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        update() {
+            this.y += this.speed;
+            if (this.y > canvas.height + this.size / 2) {
+                this.reset();
+            }
+        }
+
+        reset() {
+            this.x = Math.random() * canvas.width;
+            this.y = -50;
+            this.speed = Math.random() * 3 + 2; // Faster speed
+            this.color = '#' + Math.floor(Math.random()*16777215).toString(16);
+            this.shape = Math.random() < 0.5 ? 'circle' : 'square'; // Random shape
+        }
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+        const mouseX = e.clientX;
+        const mouseY = e.clientY;
+
+        for (let i = 0; i < objects.length; i++) {
+            const dx = mouseX - objects[i].x;
+            const dy = mouseY - objects[i].y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < catchRadius + (objects[i].size / 2)) {
+                objects.splice(i, 1);
+                score++;
+                break;
+            }
+        }
+    });
+
+    function drawScore() {
+        ctx.font = '24px Arial';
+        ctx.fillStyle = 'black';
+        ctx.fillText('Score: ' + score, 20, 40);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawScore();
+        objects.forEach(object => {
+            object.draw();
+        });
+    }
+
+    function update() {
+        objects.forEach(object => {
+            object.update();
+        });
+    }
+
+    function gameLoop() {
+        draw();
+        update();
+        requestAnimationFrame(gameLoop);
+    }
+
+    function spawnObjects() {
+        if (objects.length < 25) { // Maximum 25 objects on the screen
+            objects.push(new FallingObject());
+        }
+        setTimeout(spawnObjects, 1000); // Spawn new objects every second
+    }
+
+    function init() {
+        spawnObjects();
+        gameLoop();
+    }
+
+    init();
+</script>
+</body>
+</html>
